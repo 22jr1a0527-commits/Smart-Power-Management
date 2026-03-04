@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DISCOM AI Dashboard — Electricity Demand Forecasting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<!-- ═══════ LOGIN MODAL (Username/Password) ═══════ -->
+<div id="login-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:10000;">
+  <div style="width:420px;max-width:95%;background:var(--bg-card);border:2px solid var(--accent-yellow);padding:40px;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,0.7);">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-size:56px;margin-bottom:16px;">⚡</div>
+      <h1 style="margin:0;font-size:28px;color:var(--accent-yellow);font-weight:800;">DISCOM AI Platform</h1>
+      <p style="margin:8px 0 0 0;color:var(--text-secondary);font-size:13px;">Electricity Demand Forecasting & Anomaly Detection</p>
+      <p style="margin:6px 0 0 0;color:var(--text-muted);font-size:11px;">Dashboard Version 2.0</p>
+    </div>
+    
+    <div style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:12px;margin-bottom:24px;">
+      <p style="margin:0;color:var(--text-primary);font-size:11px;"><strong style="color:var(--accent-green);">✓ Demo Mode</strong><br/>Username: <code style="color:var(--accent-cyan);background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;">operator1</code><br/>Password: <code style="color:var(--accent-cyan);background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;">discom123</code></p>
+    </div>
+    
+    <div id="auth-container">
+      <!-- login form -->
+      <form id="login-form" style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;font-weight:600;letter-spacing:0.5px;">🔤 Username</label>
+          <input id="username-input" type="text" placeholder="operator1" style="width:100%;padding:12px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:13px;font-family:var(--font-mono);" />
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;font-weight:600;letter-spacing:0.5px;">🔑 Password</label>
+          <input id="password-input" type="password" placeholder="••••••••" style="width:100%;padding:12px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:13px;font-family:var(--font-mono);" />
+        </div>
+        <div id="login-error" style="display:none;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.4);color:var(--accent-red);padding:12px;border-radius:6px;font-size:12px;margin-bottom:8px;"></div>
+        <button id="btn-login" type="button" style="padding:12px 16px;border-radius:8px;background:var(--accent-green);border:none;color:#0a0e1a;font-weight:700;cursor:pointer;font-size:14px;transition:all 0.2s;letter-spacing:0.5px;">✓ LOGIN TO DASHBOARD</button>
+        <div style="margin-top:8px;font-size:12px;text-align:center;color:var(--text-secondary);">
+          Don't have an account? <a href="#" id="link-show-signup" style="color:var(--accent-cyan);text-decoration:underline;cursor:pointer;">Sign up</a>
+        </div>
+      </form>
+
+      <!-- signup form, hidden initially -->
+      <form id="signup-form" style="display:none;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;font-weight:600;letter-spacing:0.5px;">👤 Full Name</label>
+          <input id="signup-name" type="text" placeholder="Your Name" style="width:100%;padding:12px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:13px;font-family:var(--font-mono);" />
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;font-weight:600;letter-spacing:0.5px;">🔤 Username</label>
+          <input id="signup-username" type="text" placeholder="operatorX" style="width:100%;padding:12px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:13px;font-family:var(--font-mono);" />
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;font-weight:600;letter-spacing:0.5px;">🔑 Password</label>
+          <input id="signup-password" type="password" placeholder="••••••••" style="width:100%;padding:12px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:13px;font-family:var(--font-mono);" />
+        </div>
+        <div id="signup-error" style="display:none;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.4);color:var(--accent-red);padding:12px;border-radius:6px;font-size:12px;margin-bottom:8px;"></div>
+        <button id="btn-signup" type="button" style="padding:12px 16px;border-radius:8px;background:var(--accent-cyan);border:none;color:#0a0e1a;font-weight:700;cursor:pointer;font-size:14px;transition:all 0.2s;letter-spacing:0.5px;">✅ CREATE ACCOUNT</button>
+        <div style="margin-top:8px;font-size:12px;text-align:center;color:var(--text-secondary);">
+          Already have an account? <a href="#" id="link-show-login" style="color:var(--accent-cyan);text-decoration:underline;cursor:pointer;">Login</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ LOCATION SELECTION MODAL ═══════ -->
+<div id="location-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;z-index:9999;">
+  <div style="width:800px;max-width:95%;background:var(--bg-card);border:2px solid var(--accent-yellow);padding:32px;border-radius:12px;color:var(--text-primary);box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:32px;">📍</div>
+        <div>
+          <h2 style="margin:0;font-size:24px;color:var(--accent-yellow);">Select Operating Location</h2>
+          <p style="margin:4px 0 0 0;color:var(--text-secondary);font-size:12px;">Choose your Feeder &amp; Data View</p>
+        </div>
+      </div>
+      <button id="btn-logout" type="button" style="background:rgba(248,113,113,0.2);border:1px solid rgba(248,113,113,0.4);color:var(--accent-red);padding:8px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">🚪 Logout</button>
+    </div>
+    
+    <div style="background:rgba(244,197,66,0.08);border-left:4px solid var(--accent-yellow);padding:12px 16px;border-radius:6px;margin-bottom:20px;">
+      <p style="margin:0;color:var(--text-primary);font-size:13px;"><strong>📋 Step-by-Step:</strong> Select your Company → Zone → Circle → Division → Sub-division → Substation → <strong style="color:var(--accent-yellow);">Feeder</strong> (required). All analytics will be filtered to your selected feeder.</p>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">
+      <div>
+        <label style="display:block;font-size:10px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;font-weight:600;">1. Company</label>
+        <select id="sel-company" style="width:100%;padding:10px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:12px;"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;font-weight:600;">2. Zone</label>
+        <select id="sel-zone" style="width:100%;padding:10px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:12px;"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;font-weight:600;">3. Circle</label>
+        <select id="sel-circle" style="width:100%;padding:10px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:12px;"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;font-weight:600;">4. Division</label>
+        <select id="sel-division" style="width:100%;padding:10px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:12px;"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;font-weight:600;">5. Sub-division</label>
+        <select id="sel-subdivision" style="width:100%;padding:10px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:12px;"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;font-weight:600;">6. Substation</label>
+        <select id="sel-substation" style="width:100%;padding:10px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:12px;"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;font-weight:600;color:var(--accent-green);">⭐ 7. Feeder (Required — multi-select allowed)</label>
+        <select id="sel-feeder" multiple size="4" style="width:100%;padding:10px;border-radius:6px;background:#0f1624;border:2px solid var(--accent-green);color:var(--text-primary);font-size:12px;"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;font-weight:600;">8. DT (Optional)</label>
+        <select id="sel-dt" style="width:100%;padding:10px;border-radius:6px;background:#0f1624;border:1px solid var(--border);color:var(--text-primary);font-size:12px;"></select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+      <button id="btn-enter" disabled style="padding:12px 28px;border-radius:8px;background:var(--accent-green);border:none;color:#0a0e1a;font-weight:700;cursor:pointer;font-size:14px;transition:all 0.2s;opacity:0.6;cursor:not-allowed;">✓ ENTER DASHBOARD</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MAIN DASHBOARD CONTENT ═══════ -->
+<div id="dashboard-container" style="display:none;">
+  
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-left">
+      <div class="logo-mark">⚡</div>
+      <div>
+        <div class="site-title">DISCOM AI PLATFORM</div>
+        <div class="site-sub">Electricity Demand Forecasting & Explainable Anomaly Detection</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge"><span class="pulse-dot"></span> LIVE</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="header-time" id="clock">--:--:--</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="location-display" style="font-size:12px;color:var(--text-secondary)">Location: <span style="color:var(--text-primary)" id="loc-name">--</span></div>
+          <button id="change-location" style="background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px;">⚙️ Change</button>
+          <button id="logout-btn" style="background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.4);color:var(--accent-red);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px;">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV TABS -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('overview', event)">Overview</button>
+    <button class="tab-btn" onclick="switchTab('forecast', event)">Demand Forecast</button>
+    <button class="tab-btn" onclick="switchTab('anomalies', event)">Anomaly Detection</button>
+    <button class="tab-btn" onclick="switchTab('feeders', event)">Feeder Status</button>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- OVERVIEW TAB -->
+    <section id="tab-overview" class="tab-section active">
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card accent-yellow">
+          <div class="kpi-icon">📈</div>
+          <div class="kpi-label">Peak Load</div>
+          <div class="kpi-value" id="kpi-peak">-- MW</div>
+          <div class="kpi-sub">Last 7 days</div>
+        </div>
+        <div class="kpi-card accent-cyan">
+          <div class="kpi-icon">⚖️</div>
+          <div class="kpi-label">Avg Load</div>
+          <div class="kpi-value" id="kpi-avg">-- MW</div>
+          <div class="kpi-sub">Rolling average</div>
+        </div>
+        <div class="kpi-card accent-green">
+          <div class="kpi-icon">🎯</div>
+          <div class="kpi-label">Forecast MAPE</div>
+          <div class="kpi-value" id="kpi-mape">--%</div>
+          <div class="kpi-sub">N-BEATS accuracy</div>
+        </div>
+        <div class="kpi-card accent-red">
+          <div class="kpi-icon">🚨</div>
+          <div class="kpi-label">Active Anomalies</div>
+          <div class="kpi-value" id="kpi-anomalies">--</div>
+          <div class="kpi-sub">Detected this week</div>
+        </div>
+        <div class="kpi-card accent-blue">
+          <div class="kpi-icon">📉</div>
+          <div class="kpi-label">RMSE</div>
+          <div class="kpi-value" id="kpi-rmse">--</div>
+          <div class="kpi-sub">Root mean sq error</div>
+        </div>
+        <div class="kpi-card accent-purple">
+          <div class="kpi-icon">📊</div>
+          <div class="kpi-label">MAE</div>
+          <div class="kpi-value" id="kpi-mae">-- MW</div>
+          <div class="kpi-sub">Mean absolute error</div>
+        </div>
+      </div>
+
+      <!-- Overview Charts Row -->
+      <div class="charts-row">
+        <div class="chart-card wide">
+          <div class="chart-header">
+            <span class="chart-title">7-Day Load vs N-BEATS Forecast</span>
+            <span class="chart-badge">N-BEATS Model</span>
+          </div>
+          <canvas id="overviewChart" height="110"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Anomaly Type Breakdown</span>
+          </div>
+          <canvas id="anomalyPieChart" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Workflow Banner -->
+      <div class="workflow-banner">
+        <div class="wf-step">
+          <div class="wf-icon">🔌</div>
+          <div class="wf-label">Data Ingestion</div>
+          <div class="wf-desc">Smart meter &amp; feeder data</div>
+        </div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-step">
+          <div class="wf-icon">🧹</div>
+          <div class="wf-label">Preprocessing</div>
+          <div class="wf-desc">Imputation &amp; normalization</div>
+        </div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-step active-step">
+          <div class="wf-icon">🧠</div>
+          <div class="wf-label">N-BEATS Forecast</div>
+          <div class="wf-desc">Trend + seasonality</div>
+        </div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-step">
+          <div class="wf-icon">📐</div>
+          <div class="wf-label">Residual Analysis</div>
+          <div class="wf-desc">Actual − Forecast</div>
+        </div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-step">
+          <div class="wf-icon">🚨</div>
+          <div class="wf-label">Anomaly Detection</div>
+          <div class="wf-desc">Quantile threshold</div>
+        </div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-step">
+          <div class="wf-icon">💡</div>
+          <div class="wf-label">XAI Explain</div>
+          <div class="wf-desc">Operator alerts</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORECAST TAB -->
+    <section id="tab-forecast" class="tab-section">
+      <div class="section-heading">
+        <h2>📈 Electricity Demand Forecast</h2>
+        <p>24-hour & 7-day ahead load predictions | AI-powered forecasting helps you plan generation, manage capacity, and prevent overloads</p>
+      </div>
+
+      <!-- Forecast KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+        <div style="background:rgba(52,211,153,0.12);border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <div style="color:var(--text-muted);font-size:10px;text-transform:uppercase;margin-bottom:4px;">Forecast Accuracy (MAPE)</div>
+          <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--accent-green);" id="forecast-mape-display">--</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Lower is better (5% = very accurate)</div>
+        </div>
+        <div style="background:rgba(34,211,238,0.12);border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <div style="color:var(--text-muted);font-size:10px;text-transform:uppercase;margin-bottom:4px;">MAE Error (MW)</div>
+          <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--accent-cyan);" id="forecast-mae-display">--</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Average prediction error in MW</div>
+        </div>
+        <div style="background:rgba(96,165,250,0.12);border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <div style="color:var(--text-muted);font-size:10px;text-transform:uppercase;margin-bottom:4px;">Peak This Week</div>
+          <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--accent-blue);" id="forecast-peak-display">--</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Highest load in last 7 days</div>
+        </div>
+        <div style="background:rgba(251,146,60,0.12);border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <div style="color:var(--text-muted);font-size:10px;text-transform:uppercase;margin-bottom:4px;">Average Load</div>
+          <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--accent-orange);" id="forecast-avg-display">--</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Typical load on this feeder</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card wide">
+          <div class="chart-header">
+            <span class="chart-title">7-Day Historical Load vs AI Forecast</span>
+            <span class="chart-badge">Blue=Actual Load, Yellow=AI Predicted Load</span>
+          </div>
+          <canvas id="forecastChart" height="120"></canvas>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Next 24 Hours Forecast</span>
+            <span class="chart-badge green-badge">👥 Plan your generation based on this</span>
+          </div>
+          <canvas id="futureChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Prediction Errors (MW)</span>
+            <span class="chart-badge red-badge">Red=Over-predict, Blue=Under-predict</span>
+          </div>
+          <canvas id="residualChart" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="algo-info-grid">
+        <div class="algo-card">
+          <div class="algo-title">🧠 What is N-BEATS?</div>
+          <div class="algo-desc">Our AI model predicts demand by learning 2 things: Trend (is demand rising?) + Seasonality (what time of day?). More accurate than simple averages.</div>
+        </div>
+        <div class="algo-card">
+          <div class="algo-title">💡 Why Forecast Matters</div>
+          <div class="algo-desc">Know TOMORROW's peak load TODAY. Use it to: Start generators before peak hits, Buy power at best time, Prevent blackouts & overloads.</div>
+        </div>
+        <div class="algo-card">
+          <div class="algo-title">⚠️ Understanding Errors</div>
+          <div class="algo-desc">If forecast was 400 MW but actual was 420 MW = 20 MW error. Small errors = good model. Big swings = something unexpected happened!</div>
+        </div>
+        <div class="algo-card">
+          <div class="algo-title">🎯 Operator Action</div>
+          <div class="algo-desc">See peak at 6 PM tomorrow? Schedule extra generators NOW. See low load at 3 AM? Good time for feeder maintenance.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANOMALY TAB -->
+    <section id="tab-anomalies" class="tab-section">
+      <div class="section-heading">
+        <h2>⚠️ Anomaly Detection & Threat Alert System</h2>
+        <p style="color:var(--accent-orange);font-weight:600;">Real-time detection of unusual electrical patterns | Identifies power theft, equipment faults, and load anomalies</p>
+      </div>
+
+      <!-- Alert Summary -->
+      <div class="alert-summary-row">
+        <div class="alert-card alert-high">
+          <div class="alert-icon">🚨</div>
+          <div>
+            <div class="alert-label">HIGH SEVERITY</div>
+            <div class="alert-count" id="anomaly-count-high">0</div>
+            <div class="alert-sub">Critical issues requiring immediate action</div>
+          </div>
+        </div>
+        <div class="alert-card alert-medium">
+          <div class="alert-icon">⚠️</div>
+          <div>
+            <div class="alert-label">MEDIUM SEVERITY</div>
+            <div class="alert-count" id="anomaly-count-medium">0</div>
+            <div class="alert-sub">Monitor closely, investigate within 24h</div>
+          </div>
+        </div>
+        <div class="alert-card alert-clear">
+          <div class="alert-icon">✓</div>
+          <div>
+            <div class="alert-label">NORMAL STATUS</div>
+            <div class="alert-count" id="anomaly-count-normal">Healthy</div>
+            <div class="alert-sub">No anomalies detected in selected period</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card wide">
+          <div class="chart-header">
+            <span class="chart-title">Load Profile with Anomaly Markers</span>
+            <span class="chart-badge red-badge">🔴 = Suspicious Activity Detected</span>
+          </div>
+          <canvas id="anomalyChart" height="120"></canvas>
+        </div>
+      </div>
+
+      <div class="anomaly-table-section">
+        <div class="table-header-row">
+          <div>
+            <h3 style="margin:0;margin-bottom:4px;">Detailed Anomaly Log</h3>
+            <p style="margin:0;color:var(--text-secondary);font-size:11px;">Each anomaly includes AI-generated explanation for operator action</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="threshold-badge" id="threshold-display">Threshold: -- MW</span>
+            <span style="font-size:11px;color:var(--text-muted);">Anomalies shown: <strong id="anomaly-list-count">0</strong></span>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <div id="anomaly-cards-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(500px,1fr));gap:12px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DISTRIBUTION TRANSFORMER ANALYTICS TAB -->
+    <section id="tab-feeders" class="tab-section">
+      <div class="section-heading">
+        <h2>🔌 Distribution Transformer Analytics</h2>
+        <p>Real-time distribution transformer monitoring for selected feeder | Shows utilization %, capacity, efficiency, and power losses | Green (<70%) = Safe | Orange (70-85%) = Caution | Red (>85%) = Critical</p>
+      </div>
+      <div class="feeder-grid" id="feeder-grid">
+        <div class="loading-placeholder">Loading feeder data...</div>
+      </div>
+      <div class="charts-row" style="margin-top:24px">
+        <div class="chart-card wide">
+          <div class="chart-header">
+            <span class="chart-title">Distribution Transformer Utilization (%)</span>
+            <span class="chart-badge">Real-time DT capacity monitoring</span>
+          </div>
+          <canvas id="feederBarChart" height="100"></canvas>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <span>KKR & KSR Institute of Technology and Sciences · Batch 07 · Department of CSE</span>
+    <span>Srividya Jasti · Avvaru Lakshmi Sumani · Akkala Mythri · Kanne Sravanthi</span>
+    <span>Guide: Mrs. R. Madhuri Devi</span>
+  </footer>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
